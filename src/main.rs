@@ -33,20 +33,24 @@ struct Cipher {
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 
+static URL_PREFIX: &str = "https://dev-portal.connectsmartx.com";
+const AES256_KEY_SIZE: usize = 32;
+const AES128_BLOCK_SIZE: usize = 16;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut rng = rand::thread_rng();
     // generate key & iv
     // AES256 key size
-    let key_data: [u8; 32] = rng.gen();
+    let key_data: [u8; AES256_KEY_SIZE] = rng.gen();
     // AES128 block size
-    let iv_data: [u8; 16] = rng.gen();
+    let iv_data: [u8; AES128_BLOCK_SIZE] = rng.gen();
 
     let pub_key = fs::read_to_string("pub_key.pem").expect("Something went wrong reading the file");
 
     // openid login
     let client = reqwest::Client::new();
-    let url = "https://dev-portal.connectsmartx.com/api/v1/openid_login/gplus";
+    let url = format!("{URL_PREFIX}/api/v1/openid_login/gplus");
     let (security_base64, cipher_base64) = login_payload(&key_data, &iv_data, &pub_key);
     println!("security = {}", security_base64);
     println!("cipher = {}", cipher_base64);
@@ -105,7 +109,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // get profile
     let client = reqwest::Client::new();
-    let url = "https://dev-portal.connectsmartx.com/api/v1/profile";
+    let url = format!("{URL_PREFIX}/api/v1/profile");
     let resp = client.get(url).bearer_auth(&metropia_token).send().await?;
     let body = resp.text().await?;
     let v: Value = serde_json::from_str(&body)?;
@@ -128,7 +132,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // get favorites
     let client = reqwest::Client::new();
-    let url = "https://dev-portal.connectsmartx.com/api/v1/favorites";
+    let url = format!("{URL_PREFIX}/api/v1/favorites");
     let resp = client.get(url).bearer_auth(&metropia_token).send().await?;
     let body = resp.text().await?;
     //    println!("favorites = {}", body);
